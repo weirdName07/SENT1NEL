@@ -1,0 +1,87 @@
+version: "3.9"
+
+services:
+  # ── Message Bus ──────────────────────────────────────────────
+  nats:
+    image: nats:2.10-alpine
+    command: >
+      --jetstream
+      --store_dir /data
+      --max_payload 1048576
+      --http_port 8222
+    ports:
+      - "4222:4222" # Client
+      - "8222:8222" # Monitoring
+    volumes:
+      - nats_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8222/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── Time-Series DB + Geospatial ─────────────────────────────
+  timescaledb:
+    image: timescale/timescaledb-ha:pg16
+    environment:
+      POSTGRES_USER: sentinel
+      POSTGRES_PASSWORD: sentinel_dev
+      POSTGRES_DB: sentinel
+    ports:
+      - "5432:5432"
+    volumes:
+      - tsdb_data:/home/postgres/pgdata/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sentinel"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── Hot State Cache ─────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    command: >
+      redis-server
+      --maxmemory 2gb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+      --save 60 1000
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── Sentinel API ────────────────────────────────────────────
+  sentinel-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      SENTINEL_NATS_URL: nats://nats:4222
+      SENTINEL_DB_HOST: timescaledb
+      SENTINEL_DB_PORT: 5432
+      SENTINEL_DB_USER: sentinel
+      SENTINEL_DB_PASSWORD: sentinel_dev
+      SENTINEL_DB_NAME: sentinel
+      SENTINEL_REDIS_URL: redis://redis:6379/0
+      SENTINEL_LOG_LEVEL: INFO
+      SENTINEL_LOG_FORMAT: json
+    depends_on:
+      nats:
+        condition: service_healthy
+      timescaledb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  nats_data:
+  tsdb_data:
+  redis_data:
