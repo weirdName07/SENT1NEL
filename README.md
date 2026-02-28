@@ -4,11 +4,7 @@ A real-time geospatial intelligence system ingesting open-source live data strea
 
 ## Architecture
 
-```
-OSINT Sources → Ingestion → NATS JetStream → Processing Pipeline → TimescaleDB/Redis → API/WebSocket
-                                                    ↓
-                                              Event Bus (anomalies, geofence, lifecycle)
-```
+![Sentinel Architecture](docs/architecture.png)
 
 **6 Layers**: Ingestion · Stream Processing · Storage · Analytics · API · Frontend
 
@@ -23,8 +19,8 @@ docker compose up -d nats timescaledb redis
 # 2. Install dependencies
 pip install -e ".[dev]"
 
-# 3. Copy environment config
-cp .env.example .env
+# 3. Edit .env if needed (works out of the box for 4/5 sources)
+#    Only aisstream.io needs a free API key — see .env for details
 
 # 4. Run the engine
 python -m sentinel
@@ -35,13 +31,13 @@ open http://localhost:8000/docs
 
 ## Data Sources
 
-| Source | Type | Protocol | Update Rate |
-|--------|------|----------|-------------|
-| OpenSky Network | Aircraft (ADS-B) | REST | 10s |
-| USGS | Earthquakes | REST/GeoJSON | 60s |
-| CelesTrak | Satellites (TLE+SGP4) | REST | 1hr |
-| aisstream.io | Marine Vessels (AIS) | WebSocket | Real-time |
-| Open-Meteo | Weather | REST | 5min |
+| Source | Type | Protocol | Rate | API Key |
+|--------|------|----------|------|---------|
+| OpenSky Network | Aircraft (ADS-B) | REST | 15s | ✅ None (anonymous) |
+| USGS | Earthquakes | REST/GeoJSON | 60s | ✅ None |
+| CelesTrak | Satellites (TLE+SGP4) | REST | 1hr | ✅ None |
+| aisstream.io | Marine Vessels (AIS) | WebSocket | Real-time | 🔑 Free registration |
+| Open-Meteo | Weather | REST | 5min | ✅ None |
 
 ## API Endpoints
 
