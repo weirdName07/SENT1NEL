@@ -1,0 +1,120 @@
+Metadata-Version: 2.4
+Name: sentinel
+Version: 0.1.0
+Summary: World Awareness Engine — real-time geospatial intelligence from OSINT data streams
+License: MIT
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pydantic<3,>=2.5
+Requires-Dist: pydantic-settings<3,>=2.1
+Requires-Dist: uvloop>=0.19; sys_platform != "win32"
+Requires-Dist: nats-py<3,>=2.6
+Requires-Dist: asyncpg<1,>=0.29
+Requires-Dist: redis<6,>=5.0
+Requires-Dist: fastapi<1,>=0.109
+Requires-Dist: uvicorn[standard]<1,>=0.27
+Requires-Dist: websockets<14,>=12
+Requires-Dist: aiohttp<4,>=3.9
+Requires-Dist: shapely<3,>=2.0
+Requires-Dist: numpy<3,>=1.26
+Requires-Dist: sgp4<3,>=2.22
+Requires-Dist: prometheus-client<1,>=0.20
+Requires-Dist: structlog<25,>=24.1
+Requires-Dist: orjson<4,>=3.9
+Requires-Dist: python-dotenv<2,>=1.0
+Provides-Extra: dev
+Requires-Dist: pytest<9,>=8.0; extra == "dev"
+Requires-Dist: pytest-asyncio<1,>=0.23; extra == "dev"
+Requires-Dist: pytest-cov<6,>=4.1; extra == "dev"
+Requires-Dist: httpx<1,>=0.27; extra == "dev"
+Requires-Dist: aioresponses<1,>=0.7; extra == "dev"
+Requires-Dist: ruff<1,>=0.2; extra == "dev"
+Dynamic: license-file
+
+# Sentinel — World Awareness Engine
+
+A real-time geospatial intelligence system ingesting open-source live data streams (ADS-B aircraft, satellite TLEs, earthquakes, weather, AIS marine) and transforming them into structured, queryable, anomaly-detecting intelligence.
+
+## Architecture
+
+```
+OSINT Sources → Ingestion → NATS JetStream → Processing Pipeline → TimescaleDB/Redis → API/WebSocket
+                                                    ↓
+                                              Event Bus (anomalies, geofence, lifecycle)
+```
+
+**6 Layers**: Ingestion · Stream Processing · Storage · Analytics · API · Frontend
+
+**Key Systems**: Entity lifecycle state machine · Kalman-based track stitching · Backpressure control · Prometheus observability · Entity-type-aware anomaly detection · First-class event layer
+
+## Quick Start
+
+```bash
+# 1. Start infrastructure
+docker compose up -d nats timescaledb redis
+
+# 2. Install dependencies
+pip install -e ".[dev]"
+
+# 3. Copy environment config
+cp .env.example .env
+
+# 4. Run the engine
+python -m sentinel
+
+# 5. Open API docs
+open http://localhost:8000/docs
+```
+
+## Data Sources
+
+| Source | Type | Protocol | Update Rate |
+|--------|------|----------|-------------|
+| OpenSky Network | Aircraft (ADS-B) | REST | 10s |
+| USGS | Earthquakes | REST/GeoJSON | 60s |
+| CelesTrak | Satellites (TLE+SGP4) | REST | 1hr |
+| aisstream.io | Marine Vessels (AIS) | WebSocket | Real-time |
+| Open-Meteo | Weather | REST | 5min |
+
+## API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Liveness probe |
+| `/ready` | GET | Readiness probe (checks NATS, DB, Redis) |
+| `/metrics` | GET | Prometheus metrics |
+| `/api/v1/entities` | GET | Query entities (bbox, type, time filters) |
+| `/api/v1/entities/{id}/track` | GET | Entity track history |
+| `/api/v1/entities/live` | GET | Live entities from Redis cache |
+| `/api/v1/events` | GET | Query events (type, severity, time) |
+| `/api/v1/geofences` | GET/POST | Geofence CRUD |
+| `/api/v1/ws/entities` | WS | Live entity stream |
+| `/api/v1/ws/events` | WS | Real-time event stream |
+
+## Testing
+
+```bash
+# Unit tests
+python -m pytest tests/unit/ -v
+
+# Integration tests (requires Docker services)
+docker compose up -d
+python -m pytest tests/integration/ -v
+
+# Coverage
+python -m pytest tests/ --cov=sentinel --cov-report=term-missing
+```
+
+## Tech Stack
+
+- **Python 3.12+** — asyncio-based unified stack
+- **NATS JetStream** — message bus with backpressure
+- **TimescaleDB + PostGIS** — time-series + geospatial storage
+- **Redis 7** — hot state cache with geo-indexing
+- **FastAPI** — async REST + WebSocket API
+- **Prometheus + structlog** — observability
+
+## License
+
+MIT

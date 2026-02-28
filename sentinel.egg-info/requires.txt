@@ -1,0 +1,27 @@
+pydantic<3,>=2.5
+pydantic-settings<3,>=2.1
+nats-py<3,>=2.6
+asyncpg<1,>=0.29
+redis<6,>=5.0
+fastapi<1,>=0.109
+uvicorn[standard]<1,>=0.27
+websockets<14,>=12
+aiohttp<4,>=3.9
+shapely<3,>=2.0
+numpy<3,>=1.26
+sgp4<3,>=2.22
+prometheus-client<1,>=0.20
+structlog<25,>=24.1
+orjson<4,>=3.9
+python-dotenv<2,>=1.0
+
+[:sys_platform != "win32"]
+uvloop>=0.19
+
+[dev]
+pytest<9,>=8.0
+pytest-asyncio<1,>=0.23
+pytest-cov<6,>=4.1
+httpx<1,>=0.27
+aioresponses<1,>=0.7
+ruff<1,>=0.2
