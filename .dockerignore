@@ -1,0 +1,12 @@
+# Sentinel ignore patterns
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+node_modules/
+.vite/
+frontend/dist/
