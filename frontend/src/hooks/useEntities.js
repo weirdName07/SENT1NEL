@@ -4,7 +4,7 @@ import { WS_ENTITIES_URL, API_BASE } from '../constants';
 /**
  * Hook to fetch and maintain live entity state via WebSocket + REST fallback.
  */
-export function useEntities(selectedTypes) {
+export function useEntities(selectedTypes, lon, lat) {
     const [entities, setEntities] = useState([]);
     const [counts, setCounts] = useState({
         aircraft: 0, vessel: 0, satellite: 0, earthquake: 0, weather: 0, total: 0,
@@ -15,7 +15,9 @@ export function useEntities(selectedTypes) {
     const connectWs = useCallback(() => {
         if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
-        const ws = new WebSocket(WS_ENTITIES_URL + '?interval_ms=2000');
+        // Optionally, send lon/lat to the WS once connected, but for now
+        // the REST fallback will handle the spatial query.
+        const ws = new WebSocket(`${WS_ENTITIES_URL}?interval_ms=2000`);
         wsRef.current = ws;
 
         ws.onmessage = (event) => {
@@ -43,10 +45,13 @@ export function useEntities(selectedTypes) {
         ws.onerror = () => ws.close();
     }, []);
 
-    // Fallback: poll REST if WS unavailable
+    // Fallback: poll REST if WS unavailable, NOW SPATIALLY AWARE
     const pollRest = useCallback(async () => {
         try {
-            const res = await fetch(`${API_BASE}/entities/live?radius_km=20000&count=500`);
+            // lon and lat fall back to 0 if undefined
+            const queryLon = lon ?? 0;
+            const queryLat = lat ?? 0;
+            const res = await fetch(`${API_BASE}/entities/live?lon=${queryLon}&lat=${queryLat}&radius_km=20000&count=5000`);
             if (res.ok) {
                 const data = await res.json();
                 if (data.entities) {
@@ -61,7 +66,7 @@ export function useEntities(selectedTypes) {
                 }
             }
         } catch { /* API not available yet */ }
-    }, []);
+    }, [lon, lat]);
 
     useEffect(() => {
         connectWs();

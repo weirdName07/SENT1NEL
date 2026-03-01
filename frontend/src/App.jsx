@@ -25,7 +25,7 @@ export default function App() {
     ]));
     const [hoveredEntity, setHoveredEntity] = useState(null);
 
-    const { entities, counts } = useEntities(selectedTypes);
+    const { entities, counts } = useEntities(selectedTypes, viewState.longitude, viewState.latitude);
     const { events } = useEvents();
     const health = useHealth();
 
@@ -54,17 +54,23 @@ export default function App() {
                     if (d.entity_type === 'satellite') return 6000;
                     return 3000;
                 },
-                getFillColor: d => ENTITY_COLORS[d.entity_type] ?? [100, 100, 100],
-                getLineColor: d => ENTITY_COLORS[d.entity_type] ?? [100, 100, 100],
-                lineWidthMinPixels: 1,
+                getFillColor: d => {
+                    const base = ENTITY_COLORS[d.entity_type] ?? [100, 100, 100];
+                    return [base[0], base[1], base[2], 120];  // Semi-transparent core
+                },
+                getLineColor: d => {
+                    const base = ENTITY_COLORS[d.entity_type] ?? [100, 100, 100];
+                    return [base[0], base[1], base[2], 255]; // Solid neon ring
+                },
+                lineWidthMinPixels: 2,
                 stroked: true,
                 filled: true,
-                opacity: 0.7,
-                radiusMinPixels: 3,
-                radiusMaxPixels: 15,
+                opacity: 0.9,
+                radiusMinPixels: 4,
+                radiusMaxPixels: 20,
                 pickable: true,
                 autoHighlight: true,
-                highlightColor: [255, 255, 255, 80],
+                highlightColor: [255, 255, 255, 150],
                 onHover: info => setHoveredEntity(info.object ?? null),
                 transitions: {
                     getPosition: 500,

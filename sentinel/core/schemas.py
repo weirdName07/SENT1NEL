@@ -41,9 +41,8 @@ class Position(BaseModel):
 
     def to_wkt(self) -> str:
         """Convert to WKT for PostGIS."""
-        if self.altitude_m is not None:
-            return f"SRID=4326;POINTZ({self.longitude} {self.latitude} {self.altitude_m})"
-        return f"SRID=4326;POINT({self.longitude} {self.latitude})"
+        alt = self.altitude_m if self.altitude_m is not None else 0.0
+        return f"SRID=4326;POINTZ({self.longitude} {self.latitude} {alt})"
 
 
 class Velocity(BaseModel):

@@ -82,7 +82,7 @@ async def live_entities(
     lon: float = Query(0, description="Center longitude"),
     lat: float = Query(0, description="Center latitude"),
     radius_km: float = Query(500, ge=1, le=20000),
-    count: int = Query(100, ge=1, le=1000),
+    count: int = Query(100, ge=1, le=10000),
 ):
     """Get live entities from Redis hot cache within radius."""
     cache = request.app.state.cache

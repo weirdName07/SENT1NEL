@@ -1,21 +1,21 @@
 /* ── Sentinel Design System ────────────────────────────────── */
 
 :root {
-  /* Base palette */
-  --bg-primary: #0a0e17;
-  --bg-secondary: #111827;
-  --bg-panel: #1a2035;
-  --bg-card: #1e2a42;
-  --bg-hover: #243352;
+  /* Base palette - Pitch Black Radar Theme */
+  --bg-primary: #02040a;
+  --bg-secondary: rgba(6, 11, 25, 0.85);
+  --bg-panel: rgba(2, 6, 18, 0.90);
+  --bg-card: rgba(10, 18, 38, 0.6);
+  --bg-hover: rgba(0, 212, 255, 0.15);
 
-  /* Accent colors */
-  --accent-cyan: #00d4ff;
-  --accent-blue: #3b82f6;
-  --accent-purple: #8b5cf6;
-  --accent-green: #10b981;
-  --accent-red: #ef4444;
-  --accent-orange: #f59e0b;
-  --accent-pink: #ec4899;
+  /* Cyberpunk / Radar Accent colors */
+  --accent-cyan: #00f0ff;
+  --accent-blue: #0077ff;
+  --accent-purple: #b53cff;
+  --accent-green: #00ff88;
+  --accent-red: #ff003c;
+  --accent-orange: #ffaa00;
+  --accent-pink: #ff00ff;
 
   /* Entity type colors */
   --entity-aircraft: #00d4ff;
@@ -35,21 +35,23 @@
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
 
-  /* Borders */
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-accent: rgba(0, 212, 255, 0.3);
+  /* Borders - Glowing */
+  --border-subtle: rgba(0, 240, 255, 0.15);
+  --border-accent: rgba(0, 240, 255, 0.5);
+  --border-glow: 0 0 10px rgba(0, 240, 255, 0.3), inset 0 0 10px rgba(0, 240, 255, 0.1);
 
-  /* Glass */
-  --glass-bg: rgba(10, 14, 23, 0.85);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-blur: 20px;
+  /* Glass / HUD */
+  --glass-bg: rgba(2, 6, 18, 0.75);
+  --glass-border: rgba(0, 240, 255, 0.3);
+  --glass-blur: 8px;
 
   /* Sizing */
   --sidebar-width: 340px;
   --header-height: 52px;
 
-  /* Fonts */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Fonts - Strict Tech/Radar aesthetic */
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
+  --font-sans: 'Orbitron', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   /* Transitions */
@@ -61,6 +63,8 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  /* Ensure radar scanlines format correctly */
+  text-shadow: 0 0 2px rgba(255,255,255,0.2);
 }
 
 html, body, #root {
@@ -99,7 +103,8 @@ html, body, #root {
   background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
-  border-bottom: 1px solid var(--glass-border);
+  border-bottom: 2px solid var(--accent-cyan);
+  box-shadow: var(--border-glow);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -114,14 +119,12 @@ html, body, #root {
 }
 
 .header-brand .logo {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 3px;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 4px;
   text-transform: uppercase;
-  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--accent-cyan);
+  text-shadow: 0 0 8px var(--accent-cyan);
 }
 
 .header-brand .subtitle {
@@ -139,6 +142,10 @@ html, body, #root {
   display: flex;
   align-items: center;
   gap: 6px;
+  padding: 2px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  background: var(--bg-card);
 }
 
 .stat-dot {
@@ -161,9 +168,10 @@ html, body, #root {
 
 .stat-value {
   font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   color: var(--text-primary);
+  text-shadow: 0 0 4px rgba(255,255,255,0.5);
 }
 
 .stat-label {
@@ -221,8 +229,10 @@ html, body, #root {
   width: var(--sidebar-width);
   height: calc(100vh - var(--header-height));
   margin-top: var(--header-height);
-  background: var(--bg-secondary);
-  border-left: 1px solid var(--border-subtle);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  border-left: 2px solid var(--accent-cyan);
+  box-shadow: -4px 0 15px rgba(0, 240, 255, 0.1);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -257,6 +267,8 @@ html, body, #root {
 .sidebar-tab.active {
   color: var(--accent-cyan);
   border-bottom-color: var(--accent-cyan);
+  background: rgba(0, 240, 255, 0.1);
+  text-shadow: 0 0 4px var(--accent-cyan);
 }
 
 .sidebar-content {
@@ -451,8 +463,9 @@ html, body, #root {
   background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
-  border-radius: 10px;
+  border: 1px solid var(--accent-cyan);
+  box-shadow: var(--border-glow);
+  border-radius: 4px;
   padding: 12px 16px;
   min-width: 120px;
 }
@@ -478,12 +491,13 @@ html, body, #root {
 /* ── Tooltip ──────────────────────────────────────────────── */
 
 .map-tooltip {
-  background: var(--bg-panel) !important;
-  border: 1px solid var(--border-accent) !important;
-  border-radius: 8px !important;
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--accent-cyan) !important;
+  border-radius: 4px !important;
   padding: 10px 14px !important;
   font-family: var(--font-sans) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+  box-shadow: var(--border-glow) !important;
+  backdrop-filter: blur(var(--glass-blur)) !important;
 }
 
 .tooltip-title {

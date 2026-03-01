@@ -29,7 +29,7 @@ export const INITIAL_VIEW_STATE = {
 };
 
 // OpenFreeMap dark style — completely free, no API key
-export const MAP_STYLE = 'https://tiles.openfreemap.org/styles/dark';
+export const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json';
 
 // Severity → UI class
 export const SEVERITY_CLASSES = {

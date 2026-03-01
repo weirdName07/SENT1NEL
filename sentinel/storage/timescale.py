@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+import json
 from pathlib import Path
 from typing import Any, Optional
 
@@ -54,7 +55,12 @@ class TimescaleStore:
             log.info("timescaledb.closed")
 
     async def run_migrations(self) -> None:
-        """Run SQL migration files in order."""
+        """Run SQL migration files in order.
+
+        Each statement is executed outside a transaction block because
+        TimescaleDB operations (create_hypertable, compression policies,
+        continuous aggregates) cannot run inside transactions.
+        """
         migration_files = sorted(MIGRATIONS_DIR.glob("*.sql"))
         async with self.pool.acquire() as conn:
             # Track applied migrations
@@ -68,14 +74,38 @@ class TimescaleStore:
                 row["name"]
                 for row in await conn.fetch("SELECT name FROM _migrations")
             }
-            for f in migration_files:
-                if f.name not in applied:
-                    sql = f.read_text()
-                    await conn.execute(sql)
+
+        for f in migration_files:
+            if f.name not in applied:
+                sql = f.read_text()
+                # Split into individual statements on semicolons
+                raw_parts = sql.split(";")
+                statements = []
+                for part in raw_parts:
+                    # Strip leading comment lines from each chunk
+                    lines = part.strip().splitlines()
+                    cleaned = "\n".join(
+                        l for l in lines if not l.strip().startswith("--")
+                    ).strip()
+                    if cleaned:
+                        statements.append(cleaned)
+
+                async with self.pool.acquire() as conn:
+                    # Exit implicit transaction so DDL can run
+                    await conn.execute("COMMIT")
+                    for stmt in statements:
+                        try:
+                            await conn.execute(stmt)
+                        except Exception as e:
+                            err_msg = str(e).lower()
+                            if "already exists" in err_msg or "already a hypertable" in err_msg:
+                                log.debug("migration.skip_existing", stmt=stmt[:60], reason=str(e))
+                            else:
+                                raise
                     await conn.execute(
                         "INSERT INTO _migrations (name) VALUES ($1)", f.name
                     )
-                    log.info("migration.applied", name=f.name)
+                log.info("migration.applied", name=f.name)
 
     # ── Entity State Operations ───────────────────────────────
 
@@ -105,7 +135,7 @@ class TimescaleStore:
                 str(e.track_id) if e.track_id else None,
                 e.observation_count,
                 e.anomalies if e.anomalies else None,
-                e.metadata,
+                json.dumps(e.metadata) if e.metadata else "{}",
                 e.trace_id,
             )
             for e in entities

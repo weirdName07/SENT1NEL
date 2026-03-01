@@ -7,7 +7,6 @@ services:
     command: >
       --jetstream
       --store_dir /data
-      --max_payload 1048576
       --http_port 8222
     ports:
       - "4222:4222" # Client

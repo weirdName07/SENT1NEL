@@ -157,5 +157,5 @@ class ProcessingPipeline:
         try:
             await self._db.insert_entities(batch)
             log.debug("pipeline.batch_flushed", count=len(batch))
-        except Exception:
-            log.exception("pipeline.batch_write_error", count=len(batch))
+        except Exception as e:
+            log.exception("pipeline.batch_write_error", count=len(batch), error=str(e))

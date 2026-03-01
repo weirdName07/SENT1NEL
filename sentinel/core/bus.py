@@ -79,7 +79,7 @@ class MessageBus:
                 max_msgs_per_subject=10_000,
                 max_bytes=1_073_741_824,  # 1 GB
                 discard=DiscardPolicy.OLD,
-                max_age=3600 * 1_000_000_000,  # 1 hour in nanoseconds
+                max_age=3600,  # 1 hour in seconds
                 storage="file",
             ),
             StreamConfig(
@@ -89,7 +89,7 @@ class MessageBus:
                 max_msgs_per_subject=10_000,
                 max_bytes=1_073_741_824,
                 discard=DiscardPolicy.OLD,
-                max_age=3600 * 1_000_000_000,
+                max_age=3600,  # 1 hour in seconds
                 storage="file",
             ),
             StreamConfig(
@@ -99,13 +99,13 @@ class MessageBus:
                 max_msgs_per_subject=50_000,
                 max_bytes=2_147_483_648,  # 2 GB — events are important
                 discard=DiscardPolicy.OLD,
-                max_age=86400 * 1_000_000_000,  # 24 hours
+                max_age=86400,  # 24 hours in seconds
                 storage="file",
             ),
         ]
         for cfg in streams:
             try:
-                await self._js.find_stream_info(cfg.name)
+                await self._js.stream_info(cfg.name)
                 await self._js.update_stream(cfg)
                 log.info("nats.stream.updated", stream=cfg.name)
             except nats.js.errors.NotFoundError:
