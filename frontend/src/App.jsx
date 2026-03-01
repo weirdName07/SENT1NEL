@@ -14,6 +14,8 @@ import {
     ENTITY_ICONS,
     INITIAL_VIEW_STATE,
     MAP_STYLE,
+    AIRPLANE_ICON_ATLAS,
+    AIRPLANE_ICON_MAPPING
 } from './constants';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -40,61 +42,67 @@ export default function App() {
 
     // ── Deck.gl Layers ──────────────────────────────────────
 
+    const zoomBucket = Math.floor(viewState.zoom);
+
     const layers = useMemo(() => {
-        const filtered = entities.filter(e => selectedTypes.has(e.entity_type));
+        const activeEntities = entities.filter(e => selectedTypes.has(e.entity_type));
+
+        let aircraft = activeEntities.filter(e => e.entity_type === 'aircraft');
+        const weather = activeEntities.filter(e => e.entity_type === 'weather');
+
+        // LOD Filtering to prevent React/WebGL thread crashing globally
+        if (zoomBucket < 4) {
+            aircraft = aircraft.slice(0, 1500);
+        } else if (zoomBucket < 6) {
+            aircraft = aircraft.slice(0, 5000);
+        } else if (zoomBucket < 8) {
+            aircraft = aircraft.slice(0, 20000);
+        }
 
         return [
-            // Main entity scatterplot
-            new ScatterplotLayer({
-                id: 'entities',
-                data: filtered,
-                getPosition: d => [d.position?.longitude ?? d.lon ?? 0, d.position?.latitude ?? d.lat ?? 0],
-                getRadius: d => {
-                    if (d.entity_type === 'earthquake') return Math.max(3000, (d.metadata?.magnitude ?? 3) * 8000);
-                    if (d.entity_type === 'satellite') return 6000;
-                    return 3000;
-                },
-                getFillColor: d => {
-                    const base = ENTITY_COLORS[d.entity_type] ?? [100, 100, 100];
-                    return [base[0], base[1], base[2], 120];  // Semi-transparent core
-                },
-                getLineColor: d => {
-                    const base = ENTITY_COLORS[d.entity_type] ?? [100, 100, 100];
-                    return [base[0], base[1], base[2], 255]; // Solid neon ring
-                },
-                lineWidthMinPixels: 2,
-                stroked: true,
-                filled: true,
-                opacity: 0.9,
-                radiusMinPixels: 4,
-                radiusMaxPixels: 20,
+            // Cyberpunk Airplane IconLayer
+            new IconLayer({
+                id: 'aircraft-icons',
+                data: aircraft,
                 pickable: true,
+                iconAtlas: AIRPLANE_ICON_ATLAS,
+                iconMapping: AIRPLANE_ICON_MAPPING,
+                getIcon: d => 'marker',
+                sizeScale: 1,
+                getPosition: d => [d.position?.longitude ?? d.lon ?? 0, d.position?.latitude ?? d.lat ?? 0],
+                getSize: d => (zoomBucket > 5 ? 24 : 16),
+                getColor: d => [0, 212, 255, 255],
+                getAngle: d => (d.velocity?.heading_deg ?? d.heading ?? 0),
                 autoHighlight: true,
-                highlightColor: [255, 255, 255, 150],
+                highlightColor: [255, 255, 255, 200],
                 onHover: info => setHoveredEntity(info.object ?? null),
                 transitions: {
-                    getPosition: 500,
-                    getRadius: 300,
-                },
+                    getPosition: { duration: 2000, type: 'interpolation' },
+                    getAngle: { duration: 2000, type: 'interpolation' }
+                }
             }),
 
-            // Earthquake heatmap for clusters
-            new HeatmapLayer({
-                id: 'earthquake-heat',
-                data: filtered.filter(e => e.entity_type === 'earthquake'),
+            // Weather Scatterplot
+            new ScatterplotLayer({
+                id: 'weather-dots',
+                data: weather,
                 getPosition: d => [d.position?.longitude ?? d.lon ?? 0, d.position?.latitude ?? d.lat ?? 0],
-                getWeight: d => d.metadata?.magnitude ?? 3,
-                radiusPixels: 60,
-                intensity: 1.5,
-                threshold: 0.1,
-                colorRange: [
-                    [255, 255, 178], [254, 204, 92], [253, 141, 60],
-                    [240, 59, 32], [189, 0, 38],
-                ],
-                visible: selectedTypes.has('earthquake'),
+                getRadius: 15000,
+                getFillColor: d => {
+                    const intensity = d.metadata?.precipitation_mm || 0;
+                    return intensity > 0 ? [59, 130, 246, 180] : [16, 185, 129, 80]; // Blue if raining, green otherwise
+                },
+                pickable: true,
+                radiusMinPixels: 4,
+                radiusMaxPixels: 60,
+                onHover: info => setHoveredEntity(info.object ?? null),
+                transitions: {
+                    getPosition: { duration: 5000, type: 'interpolation' }
+                },
+                visible: selectedTypes.has('weather')
             }),
         ];
-    }, [entities, selectedTypes]);
+    }, [entities, selectedTypes, zoomBucket]);
 
     // ── Tooltip ─────────────────────────────────────────────
 
@@ -114,7 +122,9 @@ export default function App() {
         if (vel.speed_mps != null) rows.push(['Speed', `${vel.speed_mps.toFixed(1)} m/s`]);
         if (vel.heading_deg != null) rows.push(['Heading', `${vel.heading_deg.toFixed(0)}°`]);
         if (pos.altitude_m != null) rows.push(['Alt', `${(pos.altitude_m / 1000).toFixed(1)} km`]);
-        if (meta.callsign) rows.push(['Callsign', meta.callsign]);
+        if (meta.callsign) rows.push(['Flight', meta.callsign]);
+        if (meta.airline) rows.push(['Airline', meta.airline]);
+        if (meta.origin && meta.destination) rows.push(['Route', `${meta.origin} → ${meta.destination}`]);
         if (meta.name) rows.push(['Name', meta.name]);
         if (meta.magnitude != null) rows.push(['Magnitude', meta.magnitude]);
         if (object.lifecycle) rows.push(['Status', object.lifecycle]);

@@ -18,6 +18,17 @@ export const ENTITY_ICONS = {
     weather: '🌤',
 };
 
+// DeckGL Airplane Icon Atlas (stealth / passenger jet style pointing North)
+export const AIRPLANE_ICON_ATLAS = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`
+<svg viewBox="0 0 512 512" width="128" height="128" xmlns="http://www.w3.org/2000/svg">
+<path d="M394.22 258.91l-149.52-84v-92a52 52 0 0 0-104 0v92l-149.52 84A24 24 0 0 0 0 279.79v30.59a24 24 0 0 0 35.84 20.84l104.83-59v120.5l-42.5 31.9a24 24 0 0 0-9.6 20.1v23.85a24 24 0 0 0 38.3 19.3L256 464l129.13 93.84a24 24 0 0 0 38.3-19.3v-23.85a24 24 0 0 0-9.6-20.1l-42.5-31.9v-120.5l104.83 59A24 24 0 0 0 512 310.38v-30.59a24 24 0 0 0-11.23-20.88z" fill="#000000"/>
+</svg>
+`);
+
+export const AIRPLANE_ICON_MAPPING = {
+    marker: { x: 0, y: 0, width: 128, height: 128, mask: true }
+};
+
 // Initial map view — global, slightly tilted
 export const INITIAL_VIEW_STATE = {
     longitude: 20,

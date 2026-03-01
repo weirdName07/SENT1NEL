@@ -14,6 +14,9 @@ from sentinel.core.schemas import EntityType, Position
 
 
 class EventType(str, Enum):
+    # Geopolitics
+    GEOPOLITICAL_NEWS = "geopolitics.news"
+
     # Anomaly
     ANOMALY_DETECTED = "anomaly.detected"
 

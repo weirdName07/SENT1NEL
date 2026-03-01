@@ -24,7 +24,13 @@ export default function EventFeed({ events }) {
                             <span className="event-time">{time}</span>
                         </div>
                         <div className="event-reason">
-                            {event.reason || 'No details'}
+                            {event.metadata?.source_url ? (
+                                <a href={event.metadata.source_url} target="_blank" rel="noreferrer" style={{ color: 'var(--entity-aircraft)', textDecoration: 'none' }}>
+                                    {event.reason || 'No details'} ↗
+                                </a>
+                            ) : (
+                                event.reason || 'No details'
+                            )}
                         </div>
                         <div className="event-meta">
                             {event.source_id && <span>ID: {event.source_id}</span>}

@@ -40,13 +40,15 @@ async def main() -> None:
 
     # ── Start ingestion connectors ────────────────────────────
     from sentinel.ingestion.opensky import OpenSkyConnector
-    from sentinel.ingestion.usgs import USGSConnector
-    from sentinel.ingestion.celestrak import CelesTrakConnector
+    from sentinel.ingestion.openmeteo import OpenMeteoConnector
+    from sentinel.ingestion.geopolitics import GeopoliticsConnector
+    from sentinel.ingestion.synthetic_flights import SyntheticFlightsConnector
 
     connectors = [
         OpenSkyConnector(bus, settings),
-        USGSConnector(bus, settings),
-        CelesTrakConnector(bus, settings),
+        OpenMeteoConnector(bus, settings),
+        GeopoliticsConnector(bus, settings),
+        SyntheticFlightsConnector(bus, settings, count=100000),
     ]
 
     # ── Start processing pipeline ─────────────────────────────

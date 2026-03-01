@@ -21,11 +21,11 @@ class Normalizer:
     """
 
     def normalize(self, raw: dict) -> EntityState | None:
-        """Dispatch to source-specific normalizer."""
-        source = raw.get("source", "")
         try:
             if source == "opensky":
                 return self._normalize_opensky(raw)
+            elif source == "synthetic_flights":
+                return self._normalize_synthetic(raw)
             elif source == "usgs":
                 return self._normalize_usgs(raw)
             elif source == "celestrak":
@@ -40,6 +40,33 @@ class Normalizer:
         except Exception:
             log.exception("normalizer.error", source=source)
             return None
+
+    def _normalize_synthetic(self, raw: dict) -> EntityState:
+        ts = raw.get("timestamp", 0)
+        return EntityState(
+            entity_id=uuid4(),
+            entity_type=EntityType.AIRCRAFT,
+            source_id=raw["source_id"],
+            source="synthetic_flights",
+            position=Position(
+                latitude=raw["latitude"],
+                longitude=raw["longitude"],
+                altitude_m=raw.get("altitude_m"),
+            ),
+            velocity=Velocity(
+                speed_mps=raw.get("velocity_mps"),
+                heading_deg=raw.get("heading"),
+                vertical_rate_mps=0.0,
+            ),
+            timestamp=datetime.fromtimestamp(ts, tz=timezone.utc) if ts else datetime.now(timezone.utc),
+            metadata={
+                "callsign": raw.get("callsign", ""),
+                "airline": raw.get("airline", ""),
+                "origin": raw.get("origin", ""),
+                "destination": raw.get("destination", ""),
+            },
+            trace_id=f"syn-{raw['source_id']}-{uuid4().hex[:8]}",
+        )
 
     def _normalize_opensky(self, raw: dict) -> EntityState:
         ts = raw.get("timestamp", 0)
