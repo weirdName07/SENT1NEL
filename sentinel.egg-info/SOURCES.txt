@@ -34,8 +34,10 @@ sentinel/ingestion/__init__.py
 sentinel/ingestion/aisstream.py
 sentinel/ingestion/base.py
 sentinel/ingestion/celestrak.py
+sentinel/ingestion/geopolitics.py
 sentinel/ingestion/openmeteo.py
 sentinel/ingestion/opensky.py
+sentinel/ingestion/synthetic_flights.py
 sentinel/ingestion/usgs.py
 sentinel/observability/__init__.py
 sentinel/observability/logging.py

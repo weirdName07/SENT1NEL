@@ -43,12 +43,14 @@ async def main() -> None:
     from sentinel.ingestion.openmeteo import OpenMeteoConnector
     from sentinel.ingestion.geopolitics import GeopoliticsConnector
     from sentinel.ingestion.synthetic_flights import SyntheticFlightsConnector
+    from sentinel.ingestion.celestrak import CelesTrakConnector
 
     connectors = [
         OpenSkyConnector(bus, settings),
         OpenMeteoConnector(bus, settings),
         GeopoliticsConnector(bus, settings),
         SyntheticFlightsConnector(bus, settings, count=100000),
+        CelesTrakConnector(bus, settings),
     ]
 
     # ── Start processing pipeline ─────────────────────────────
@@ -60,6 +62,22 @@ async def main() -> None:
     from sentinel.core.lifecycle import LifecycleManager
 
     lifecycle = LifecycleManager(bus, cache, settings)
+
+    # ── NATS → Redis event bridge ─────────────────────────────
+    # Subscribes to all events on NATS and republishes them to the
+    # Redis pub/sub channel so the WebSocket fan-out can deliver
+    # them to connected frontends.
+    async def event_bridge() -> None:
+        """Bridge NATS events → Redis pub/sub for WS fan-out."""
+        import nats
+
+        sub = await bus._nc.subscribe("sentinel.events.>")
+        log.info("event_bridge.started", subject="sentinel.events.>")
+        async for msg in sub.messages:
+            try:
+                await cache.publish("sentinel:events", msg.data)
+            except Exception:
+                log.exception("event_bridge.publish_error")
 
     # ── Start API server ──────────────────────────────────────
     from sentinel.api.app import create_app
@@ -80,6 +98,7 @@ async def main() -> None:
         tasks.append(asyncio.create_task(connector.run(), name=f"connector:{connector.name}"))
     tasks.append(asyncio.create_task(pipeline.run(), name="pipeline"))
     tasks.append(asyncio.create_task(lifecycle.run(), name="lifecycle"))
+    tasks.append(asyncio.create_task(event_bridge(), name="event_bridge"))
     tasks.append(asyncio.create_task(api_server.serve(), name="api"))
 
     log.info("sentinel.running", tasks=len(tasks))

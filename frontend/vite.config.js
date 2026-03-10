@@ -12,11 +12,34 @@ export default defineConfig({
             '/api/v1/ws': {
                 target: wsTarget,
                 ws: true,
+                changeOrigin: true,
+                rewrite: (path) => path,
+                configure: (proxy, _options) => {
+                    proxy.on('error', (err, _req, _res) => {
+                        if (err.code === 'ECONNRESET' || err.code === 'EPIPE') {
+                            // Suppress normal disconnect errors
+                            return;
+                        }
+                        console.error('WS Proxy Error:', err);
+                    });
+                },
             },
-            '/api': apiTarget,
-            '/health': apiTarget,
-            '/ready': apiTarget,
-            '/metrics': apiTarget,
+            '/api': {
+                target: apiTarget,
+                changeOrigin: true,
+            },
+            '/health': {
+                target: apiTarget,
+                changeOrigin: true,
+            },
+            '/ready': {
+                target: apiTarget,
+                changeOrigin: true,
+            },
+            '/metrics': {
+                target: apiTarget,
+                changeOrigin: true,
+            },
         },
     },
 });

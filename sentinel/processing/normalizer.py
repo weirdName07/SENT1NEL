@@ -21,7 +21,10 @@ class Normalizer:
     """
 
     def normalize(self, raw: dict) -> EntityState | None:
+        source = "unknown"
         try:
+            if isinstance(raw, dict):
+                source = raw.get("source", "unknown")
             if source == "opensky":
                 return self._normalize_opensky(raw)
             elif source == "synthetic_flights":

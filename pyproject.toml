@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "World Awareness Engine — real-time geospatial intelligence from OSINT data streams"
 readme = "README.md"
 requires-python = ">=3.12"
-license = {text = "MIT"}
+license = "MIT"
 
 dependencies = [
     # Core
@@ -56,6 +56,9 @@ dev = [
     "aioresponses>=0.7,<1",
     "ruff>=0.2,<1",
 ]
+
+[tool.setuptools.packages.find]
+include = ["sentinel*"]
 
 [build-system]
 requires = ["setuptools>=69"]
