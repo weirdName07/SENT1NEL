@@ -19,6 +19,7 @@ from sentinel.core.constants import (
 from sentinel.core.lifecycle import LifecycleManager
 from sentinel.core.schemas import EntityState
 from sentinel.observability.metrics import e2e_latency, processing_latency
+from sentinel.analytics.anomaly import AnomalyDetector
 from sentinel.processing.enricher import Enricher
 from sentinel.processing.normalizer import Normalizer
 from sentinel.processing.tracker import TrackStitcher
@@ -56,6 +57,7 @@ class ProcessingPipeline:
         self._normalizer = Normalizer()
         self._enricher = Enricher()
         self._tracker = TrackStitcher()
+        self._anomaly_detector = AnomalyDetector()
         self._batcher = BatchCoalescer(
             batch_size=settings.db_write_batch_size,
             flush_interval_s=1.0,
@@ -135,6 +137,11 @@ class ProcessingPipeline:
                 entity.source_id, entity.entity_type
             )
             entity.lifecycle = lifecycle_state
+
+        # Stage 4b: Anomaly detection
+        anomaly_events = self._anomaly_detector.check(entity)
+        for event in anomaly_events:
+            await self._bus.publish(event.nats_subject, event.serialize())
 
         # Publish any events from tracker
         for event in events:

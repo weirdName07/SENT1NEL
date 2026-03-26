@@ -82,7 +82,7 @@ class EventWriter:
                 str(e.track_id) if e.track_id else None,
                 e.confidence,
                 e.reason,
-                e.position.to_wkt() if e.position else None,
+                f"SRID=4326;POINT({e.position.longitude} {e.position.latitude})" if e.position else None,
                 e.metadata,
                 e.trace_id,
             )

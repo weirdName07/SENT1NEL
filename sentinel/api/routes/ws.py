@@ -35,20 +35,20 @@ async def ws_entities(
             entities = []
 
             # Get all entity types or specific type
-            types = [entity_type] if entity_type else ["aircraft", "vessel", "satellite", "weather"]
+            types = [entity_type] if entity_type else ["aircraft", "vessel", "satellite", "earthquake", "weather"]
 
             for etype in types:
-                keys = await cache.get_entities_in_bbox(etype, 0, 0, 20000, 500)
+                keys = await cache.get_entities_in_bbox(etype, 0, 0, 20000, 2000)
                 for key in keys:
                     entity = await cache.get_entity(key)
                     if entity:
                         entities.append(entity.model_dump(mode="json"))
 
-            await websocket.send_bytes(orjson.dumps({
+            await websocket.send_text(orjson.dumps({
                 "type": "entities",
                 "count": len(entities),
                 "data": entities,
-            }))
+            }).decode())
 
             await asyncio.sleep(interval_ms / 1000)
 
@@ -76,7 +76,8 @@ async def ws_events(websocket: WebSocket):
         while True:
             message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=1.0)
             if message and message.get("type") == "message":
-                await websocket.send_bytes(message["data"])
+                raw = message["data"]
+                await websocket.send_text(raw.decode() if isinstance(raw, bytes) else raw)
             else:
                 await asyncio.sleep(0.1)
 

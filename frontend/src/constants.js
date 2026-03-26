@@ -43,5 +43,6 @@ export const EARTH_TEXTURES = {
 
 // API config
 export const API_BASE = '/api/v1';
-export const WS_ENTITIES_URL = `ws://${window.location.host}/api/v1/ws/entities`;
-export const WS_EVENTS_URL = `ws://${window.location.host}/api/v1/ws/events`;
+const _wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+export const WS_ENTITIES_URL = `${_wsProto}//${window.location.host}/api/v1/ws/entities`;
+export const WS_EVENTS_URL = `${_wsProto}//${window.location.host}/api/v1/ws/events`;

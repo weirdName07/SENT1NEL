@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 from starlette.requests import Request
 from starlette.responses import Response
@@ -68,5 +70,11 @@ def create_app(
             content=generate_latest(),
             media_type=CONTENT_TYPE_LATEST,
         )
+
+    # ── Serve frontend static files (production build) ────────
+    # Must be mounted LAST so API routes take precedence.
+    static_dir = os.path.join(os.path.dirname(__file__), "../../static")
+    if os.path.isdir(static_dir):
+        app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
 
     return app

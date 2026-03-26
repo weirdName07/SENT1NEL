@@ -45,12 +45,7 @@ async def get_track(
     limit: int = Query(1000, ge=1, le=10000),
 ):
     """Get all historical observations for an entity track."""
-    # Look up track_id from latest entity state
-    rows = await request.app.state.db.query_entities(
-        entity_type=None,
-        limit=1,
-    )
-    # For MVP, query by source_id directly
+    # Query by source_id directly
     async with request.app.state.db.pool.acquire() as conn:
         track_rows = await conn.fetch(
             """
@@ -90,7 +85,7 @@ async def live_entities(
         keys = await cache.get_entities_in_bbox(entity_type, lon, lat, radius_km, count)
     else:
         keys = []
-        for etype in ("aircraft", "vessel", "satellite", "weather"):
+        for etype in ("aircraft", "vessel", "satellite", "earthquake", "weather"):
             etype_keys = await cache.get_entities_in_bbox(etype, lon, lat, radius_km, count // 4)
             keys.extend(etype_keys)
 

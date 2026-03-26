@@ -44,14 +44,26 @@ async def main() -> None:
     from sentinel.ingestion.geopolitics import GeopoliticsConnector
     from sentinel.ingestion.synthetic_flights import SyntheticFlightsConnector
     from sentinel.ingestion.celestrak import CelesTrakConnector
+    from sentinel.ingestion.usgs import USGSConnector
+    from sentinel.ingestion.aisstream import AISStreamConnector
 
     connectors = [
         OpenSkyConnector(bus, settings),
         OpenMeteoConnector(bus, settings),
         GeopoliticsConnector(bus, settings),
-        SyntheticFlightsConnector(bus, settings, count=100000),
+        SyntheticFlightsConnector(bus, settings, count=500),
         CelesTrakConnector(bus, settings),
+        USGSConnector(bus, settings),
     ]
+
+    # AIS requires an API key — only start if configured
+    if settings.aisstream_api_key:
+        connectors.append(AISStreamConnector(bus, settings))
+
+    # ── Start event writer ────────────────────────────────────
+    from sentinel.storage.event_writer import EventWriter
+
+    event_writer = EventWriter(bus, db.pool)
 
     # ── Start processing pipeline ─────────────────────────────
     from sentinel.processing.pipeline import ProcessingPipeline
@@ -98,6 +110,7 @@ async def main() -> None:
         tasks.append(asyncio.create_task(connector.run(), name=f"connector:{connector.name}"))
     tasks.append(asyncio.create_task(pipeline.run(), name="pipeline"))
     tasks.append(asyncio.create_task(lifecycle.run(), name="lifecycle"))
+    tasks.append(asyncio.create_task(event_writer.run(), name="event_writer"))
     tasks.append(asyncio.create_task(event_bridge(), name="event_bridge"))
     tasks.append(asyncio.create_task(api_server.serve(), name="api"))
 

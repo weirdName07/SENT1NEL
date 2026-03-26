@@ -51,9 +51,10 @@ export default function EventFeed({ events }) {
                 const category = event.metadata?.category || event.event_type?.split('.')[0] || 'INTEL';
                 const region = event.metadata?.region || '';
                 const source = event.metadata?.source_url;
-                const sourceDomain = source
-                    ? new URL(source).hostname.replace('www.', '').toUpperCase()
-                    : 'SENTINEL';
+                let sourceDomain = 'SENTINEL';
+                try {
+                    if (source) sourceDomain = new URL(source).hostname.replace('www.', '').toUpperCase();
+                } catch { /* malformed URL — fall back to SENTINEL */ }
                 const headline = event.reason || 'Breaking intelligence update';
                 const ago = timeAgo(event.timestamp);
 
