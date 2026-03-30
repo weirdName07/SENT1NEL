@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import time
 from typing import Optional
 
@@ -83,7 +84,7 @@ class EventWriter:
                 e.confidence,
                 e.reason,
                 f"SRID=4326;POINT({e.position.longitude} {e.position.latitude})" if e.position else None,
-                e.metadata,
+                json.dumps(e.metadata) if e.metadata else "{}",
                 e.trace_id,
             )
             for e in events

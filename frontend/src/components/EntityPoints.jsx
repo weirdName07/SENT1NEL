@@ -1,5 +1,5 @@
-import { useRef, useMemo, useCallback, useState } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useRef, useMemo, useCallback } from 'react';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
 // Geo to 3D cartesian
@@ -105,9 +105,7 @@ function EntityTypeLayer({ entities, type, selectedTypes, onHover }) {
         onHover?.(null);
     }, [onHover]);
 
-    if (visible.length === 0) return null;
-
-    // different geometry per type for visual differentiation
+    // Geometry must be defined before any conditional return — Rules of Hooks
     const geometry = useMemo(() => {
         switch (type) {
             case 'aircraft':
